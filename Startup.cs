@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UsersSheet.Data;
 using UsersSheet.Entities;
+using UsersSheet.Utility;
 
 namespace UsersSheet
 {
@@ -24,8 +25,14 @@ namespace UsersSheet
             {
                 config.UseSqlServer(Configuration.GetConnectionString("Default"));
             });
-            services.AddIdentity<User, Role>()
+            services.AddIdentity<User, Role>(options => options.UseNoPasswordRequirments())
                     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.ConfigureApplicationCookie(config =>
+            {
+                config.LoginPath = "/Account/SignIn";
+                config.AccessDeniedPath = "/Account/AccessDenied";
+            });
 
             services.AddControllersWithViews();
         }
@@ -47,6 +54,7 @@ namespace UsersSheet
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

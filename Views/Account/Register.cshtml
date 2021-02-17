@@ -1,0 +1,30 @@
+﻿@model RegistrationInfoViewModel
+
+<div>
+    <form asp-controller="Account" asp-action="Register" method="post">
+        <div asp-validation-summary="All"></div>
+
+        <div>
+            <label>Username</label>
+            <input asp-for="UserName"/>
+            <span asp-validation-for="UserName"/>
+        </div>
+
+        <div>
+            <label>Email</label>
+            <input asp-for="Email"/>
+            <span asp-validation-for="Email"/>
+        </div>
+
+        <div>
+            <label>Password</label>
+            <input asp-for="Password"/>
+            <span asp-validation-for="Password"/>
+        </div>
+
+        <p>
+            <button type="submit">Register</button>
+        </p>
+
+    </form>
+</div>
