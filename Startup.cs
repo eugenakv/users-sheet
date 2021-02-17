@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using UsersSheet.Data;
+using UsersSheet.Entities;
 
 namespace UsersSheet
 {
@@ -17,6 +20,13 @@ namespace UsersSheet
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<ApplicationDbContext>(config =>
+            {
+                config.UseSqlServer(Configuration.GetConnectionString("Default"));
+            });
+            services.AddIdentity<User, Role>()
+                    .AddEntityFrameworkStores<ApplicationDbContext>();
+
             services.AddControllersWithViews();
         }
 
