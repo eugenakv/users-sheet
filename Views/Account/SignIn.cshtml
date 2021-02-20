@@ -1,4 +1,7 @@
 ﻿@model SignInInfoViewModel
+@{
+    var returnUrl = Context.Request.Query["returnurl"];
+}
 
 <head>
     <link rel="stylesheet" type="text/css" href="~/css/global.css" />
@@ -7,7 +10,7 @@
     <div class="container-fluid">
         <section class="row justify-content-center">
             <section class="col-12 col-sm-8 col-md-4">
-                <form class="form-container border" asp-controller="Account" asp-action="SignIn" method="post">
+                <form class="form-container border" asp-controller="Account" asp-action="SignIn" asp-route-returnUrl="@returnUrl" method="post">
                     <div asp-validation-summary="All"></div>
 
                     <div class="form-group">
@@ -25,7 +28,7 @@
                     <button class="btn btn-block mb-3 btn-outline-primary" type="submit">Sign in</button>
 
                     <div>
-                        <a class="text-primary" onclick="location.href='@Url.Action("Register", "Account")'">Register</a>
+                        <a class="text-primary" onclick="location.href='@Url.Action("Register", "Account", new { returnurl = returnUrl })'">Register</a>
                     </div>
                 </form>
             </section>

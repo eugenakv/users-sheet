@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -44,10 +43,15 @@ namespace UsersSheet.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegistrationInfoViewModel model)
+        public async Task<IActionResult> Register(RegistrationInfoViewModel model, string returnUrl)
         {
             if (ModelState.IsValid && CheckNameIsUnique(model) && CheckEmailIsUnique(model) && CheckPasswordMatch(model) && await TryRegisterAsync(model))
             {
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
                 return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
             }
 
