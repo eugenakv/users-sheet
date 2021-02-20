@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using UsersSheet.Data;
 
 namespace UsersSheet
 {
@@ -7,7 +9,12 @@ namespace UsersSheet
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            IHost host = CreateHostBuilder(args).Build();
+            using (IServiceScope scope = host.Services.CreateScope())
+            {
+               DatabaseInitializer.Initialize(scope.ServiceProvider);
+            }
+            host.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

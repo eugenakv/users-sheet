@@ -23,7 +23,7 @@ namespace UsersSheet
         {
             services.AddDbContext<ApplicationDbContext>(config =>
             {
-                config.UseSqlServer(Configuration.GetConnectionString("Default"));
+                config.UseSqlServer(Configuration.GetConnectionString("ApplicationDbContext"));
             });
             services.AddIdentity<User, Role>(options => options.UseNoPasswordRequirments())
                     .AddEntityFrameworkStores<ApplicationDbContext>();

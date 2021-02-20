@@ -64,6 +64,12 @@ namespace UsersSheet.Controllers
             return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
         }
 
+        public async Task<IActionResult> AccessDenied()
+        {
+            await this.signInManager.SignOutAsync();
+            return RedirectToAction(nameof(SignIn), nameof(AccountController).GetControllerName());
+        }
+
         #region NonActions
 
         [NonAction]
@@ -171,11 +177,5 @@ namespace UsersSheet.Controllers
         }
 
         #endregion
-
-        public async Task<IActionResult> AccessDenied()
-        {
-            await this.signInManager.SignOutAsync();
-            return RedirectToAction(nameof(SignIn), nameof(AccountController).GetControllerName());
-        }
     }
 }
