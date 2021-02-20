@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -11,9 +12,10 @@ namespace UsersSheet.Controllers
 {
     public class AccountController : Controller
     {
+        public const string ActiveRole = "Active";
+
         private readonly UserManager<User> userManager;
         private readonly SignInManager<User> signInManager;
-        private readonly string ActiveRole = "Active";
 
         public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
         {
@@ -21,82 +23,55 @@ namespace UsersSheet.Controllers
             this.signInManager = signInManager;
         }
 
-        public IActionResult SignIn()
-        {
-            return View();
-        }
+        public IActionResult SignIn() => View();
 
         [HttpPost]
-        public async Task<IActionResult> SignIn(SignInInfoViewModel model)
+        public async Task<IActionResult> SignIn(SignInInfoViewModel model, string returnUrl)
         {
-            if (!(ModelState.IsValid && CheckUserAccountExists(model, out User user) && await IsActiveAsync(user)))
+            if (ModelState.IsValid && CheckUserAccountExists(model, out User user) && IsActive(user) && await TrySignInAsync(user, model.Password))
             {
-                return View(model);
-            }
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
 
-            SignInResult result = await this.signInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
-            if (!result.Succeeded)
-            {
-                ModelState.AddModelError(string.Empty, "Wrong password");
-                return View(model);
+                return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
             }
-
-            return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
+            
+            return View(model);
         }
 
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
 
         [HttpPost]
         public async Task<IActionResult> Register(RegistrationInfoViewModel model)
         {
-            if (!(ModelState.IsValid && CheckNameIsUnique(model) && CheckEmailIsUnique(model)))
+            if (ModelState.IsValid && CheckNameIsUnique(model) && CheckEmailIsUnique(model) && CheckPasswordMatch(model) && await TryRegisterAsync(model))
             {
-                return View(model);
+                return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
             }
 
-            User user = CreateUser(model);
-            IdentityResult result = await this.userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-            {
-                ModelState.AddModelError(string.Empty, "Something went wrong. Failed to create user");
-                return View(model);
-            }
-            await ActivateAsync(user);
-            await this.signInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
+            return View(model);
+        }
 
+        public async new Task<IActionResult> SignOut()
+        {
+            await this.signInManager.SignOutAsync();
             return RedirectToAction(nameof(HomeController.Index), nameof(HomeController).GetControllerName());
         }
 
         #region NonActions
 
         [NonAction]
-        private User CreateUser(RegistrationInfoViewModel model) => new User
+        private bool MakeQuery(out User user, Func<string, Task<User>> selector, string argument, Predicate<User> errorCondition, string errorMessage)
         {
-            UserName = model.UserName,
-            Email = model.Email,
-            RegistrationDate = DateTime.UtcNow,
-            LastLoginDate = DateTime.UtcNow
-        };
-
-        [NonAction]
-        private async Task<bool> IsActiveAsync(User user)
-        {
-            bool isActive = await this.userManager.IsInRoleAsync(user, ActiveRole);
-            if (!isActive)
+            user = selector.Invoke(argument).Result;
+            if (errorCondition.Invoke(user))
             {
-                ModelState.AddModelError(string.Empty, "You are blocked and cannot access user account");
+                ModelState.AddModelError(string.Empty, errorMessage);
+                return false;
             }
-
-            return isActive;
-        }
-
-        [NonAction]
-        private async Task ActivateAsync(User user)
-        {
-            await this.userManager.AddToRoleAsync(user, this.ActiveRole);
+            return true;
         }
 
         [NonAction]
@@ -107,6 +82,30 @@ namespace UsersSheet.Controllers
                          errorCondition: user => user is null,
                          errorMessage: "Couldn't find user with this email");
 
+        [NonAction]
+        private bool IsActive(User user)
+        {
+            if (!user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, "You are blocked and cannot access user account");
+                return false;
+            }
+            return true;
+        }
+
+        [NonAction]
+        private async Task<bool> TrySignInAsync(User user, string password)
+        {
+            SignInResult result = await this.signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, "Wrong password");
+                return false;
+            }
+            user.LastLoginDate = DateTime.Now;
+            await this.userManager.UpdateAsync(user);
+            return true;
+        }
 
         [NonAction]
         private bool CheckNameIsUnique(RegistrationInfoViewModel model) 
@@ -125,19 +124,46 @@ namespace UsersSheet.Controllers
                          errorMessage: "User with this email already exists");
 
         [NonAction]
-        private bool MakeQuery(out User user,
-                                Func<string, Task<User>> selector,
-                                string argument,
-                                Predicate<User> errorCondition,
-                                string errorMessage)
+        private bool CheckPasswordMatch(RegistrationInfoViewModel model)
         {
-            user = selector.Invoke(argument).Result;
-            if (errorCondition.Invoke(user))
+            if (model.Password != model.PasswordConfirmation)
             {
-                ModelState.AddModelError(string.Empty, errorMessage);
+                ModelState.AddModelError(string.Empty, "Password did not match");
                 return false;
             }
+
             return true;
+        }
+
+        [NonAction]
+        private async Task<bool> TryRegisterAsync(RegistrationInfoViewModel model)
+        {
+            User user = CreateUser(model);
+            IdentityResult result = await this.userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, "Something went wrong. Failed to create user");
+                return false;
+            }
+            await ActivateAsync(user);
+            await this.signInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
+            return true;
+        }
+
+        [NonAction]
+        private User CreateUser(RegistrationInfoViewModel model) => new User
+        {
+            UserName = model.UserName,
+            Email = model.Email,
+            RegistrationDate = DateTime.Now,
+            LastLoginDate = DateTime.Now,
+            IsActive = true
+        };
+
+        [NonAction]
+        private async Task ActivateAsync(User user)
+        {
+            await this.userManager.AddToRoleAsync(user, ActiveRole);
         }
 
         #endregion

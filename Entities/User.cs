@@ -8,5 +8,7 @@ namespace UsersSheet.Entities
         public DateTime RegistrationDate { get; set; }
 
         public DateTime LastLoginDate { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

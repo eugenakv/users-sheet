@@ -1,0 +1,58 @@
+﻿@model IList<SelectedUser>
+
+@{
+    TempData["users"] = Model?.Select(m => m.User.UserName)?.ToArray();
+    TempData["currentUser"] = User.Identity.Name;
+}
+
+@using (Html.BeginForm(FormMethod.Post))
+{
+    <div class="btn-group mb-10">
+        <button class="btn btn-warning mb-3" type="submit" asp-controller="Sheet" asp-action="Block">Block</button>
+        <button class="btn btn-success mb-3" type="submit" asp-controller="Sheet" asp-action="Unblock">Unblock</button>
+        <button class="btn btn-danger mb-3" type="submit" asp-controller="Sheet" asp-action="Delete">Delete</button>
+    </div>
+
+    <table class="table table-striped table-secondary table-bordered">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" onchange="selectAll(this.checked)" />
+                </th>
+                <th scope="col">#</th>
+                <th scope="col">Username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Status</th>
+                <th scope="col">Registration date</th>
+                <th scope="col">Last login</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model is not null)
+            {
+                for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <th>
+                            @Html.CheckBoxFor(m => m[i].Selected)
+                        </th>
+                        <th scope="row">@(i + 1)</th>
+                        <td>@Model[i].User.UserName</td>
+                        <td>@Model[i].User.Email</td>
+                        <td>@(Model[i].User.IsActive ? "Active" : "Blocked")</td>
+                        <td>@Model[i].User.RegistrationDate</td>
+                        <td>@Model[i].User.LastLoginDate</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+<script>
+    function selectAll(checked) {
+        document.querySelectorAll('[id$=Selected]').forEach(checkBox => {
+            checkBox.checked = checked;
+        });
+    }
+</script>

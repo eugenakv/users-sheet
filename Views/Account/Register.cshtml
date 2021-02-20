@@ -1,30 +1,42 @@
 ﻿@model RegistrationInfoViewModel
 
-<div>
-    <form asp-controller="Account" asp-action="Register" method="post">
-        <div asp-validation-summary="All"></div>
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global.css" />
+</head>
+<body>
+    <div class="container-fluid">
+        <section class="row justify-content-center">
+            <section class="col-12 col-sm-8 col-md-4">
+                <form class="form-container border" asp-controller="Account" asp-action="Register" method="post">
+                    <div asp-validation-summary="All"></div>
 
-        <div>
-            <label>Username</label>
-            <input asp-for="UserName"/>
-            <span asp-validation-for="UserName"/>
-        </div>
+                    <div class="form-group">
+                        <label class="form-label">User name</label>
+                        <input class="form-control" asp-for="UserName" />
+                        <span class="text-danger" asp-validation-for="UserName"></span>
+                    </div>
 
-        <div>
-            <label>Email</label>
-            <input asp-for="Email"/>
-            <span asp-validation-for="Email"/>
-        </div>
+                    <div class="form-group">
+                        <label class="form-label">Email address</label>
+                        <input class="form-control" asp-for="Email" />
+                        <span class="text-danger" asp-validation-for="Email"></span>
+                    </div>
 
-        <div>
-            <label>Password</label>
-            <input asp-for="Password"/>
-            <span asp-validation-for="Password"/>
-        </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input class="form-control" type="password" asp-for="Password" />
+                        <span class="text-danger" asp-validation-for="Password"></span>
+                    </div>
 
-        <p>
-            <button type="submit">Register</button>
-        </p>
+                    <div class="form-group">
+                        <label class="form-label">Confirm password</label>
+                        <input class="form-control" type="password" asp-for="PasswordConfirmation" />
+                        <span class="text-danger" asp-validation-for="PasswordConfirmation"></span>
+                    </div>
 
-    </form>
-</div>
+                    <button class="btn btn-block mb-3 btn-outline-primary" type="submit">Sign up</button>
+                </form>
+            </section>
+        </section>
+    </div>
+</body>

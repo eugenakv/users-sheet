@@ -32,6 +32,7 @@ namespace UsersSheet
             {
                 config.LoginPath = "/Account/SignIn";
                 config.AccessDeniedPath = "/Account/AccessDenied";
+                config.ReturnUrlParameter = "returnUrl";
             });
 
             services.AddControllersWithViews();
@@ -59,9 +60,7 @@ namespace UsersSheet
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }

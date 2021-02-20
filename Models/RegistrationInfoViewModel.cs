@@ -12,5 +12,8 @@ namespace UsersSheet.Models
 
         [Required]
         public string Password { get; set; }
+
+        [Required]
+        public string PasswordConfirmation { get; set; }
     }
 }
